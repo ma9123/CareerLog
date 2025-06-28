@@ -6,18 +6,34 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct ContentView: View {
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        TabView {
+            HomeView()
+            
+                .tabItem {
+                    Image(systemName: "house.fill")
+                    Text("ホーム")
+                }
+            
+            ProjectListView()
+                .tabItem {
+                    Image(systemName: "list.bullet")
+                    Text("案件")
+                }
+            
+            SkillView()
+                .tabItem {
+                    Image(systemName: "chart.bar.fill")
+                    Text("スキル")
+                }
         }
-        .padding()
+        .tint(.careerLogPrimary)
     }
 }
+
 
 #Preview {
     ContentView()
