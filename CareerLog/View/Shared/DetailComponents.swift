@@ -74,3 +74,39 @@ struct ProcessRow: View {
         }
     }
 }
+
+// セクション共通レイアウト
+struct DetailSection<Content: View>: View {
+    let title: String
+    let iconName: String
+    let content: Content
+    
+    init(title: String, iconName: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.iconName = iconName
+        self.content = content()
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 8) {
+                Image(systemName: iconName)
+                    .foregroundColor(.careerLogPrimary)
+                    .font(.system(size: 18, weight: .semibold))
+                
+                Text(title)
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.careerLogPrimaryText)
+                
+                Spacer()
+            }
+            
+            content
+        }
+        .padding(20)
+        .background(Color.careerLogCardBackground)
+        .cornerRadius(12)
+        .shadow(color: Color.careerLogBorder.opacity(1), radius: 4, x: 0, y: 2)
+    }
+}

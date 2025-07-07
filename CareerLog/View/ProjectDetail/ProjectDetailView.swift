@@ -59,7 +59,7 @@ struct ProjectDetailView: View {
             }
         }
         .sheet(isPresented: $showingEditProject) {
-            EditProjectView(project: project)
+            AddProjectView(editingProject: project)
         }
         .alert("案件を削除", isPresented: $showingDeleteAlert) {
             Button("キャンセル", role: .cancel) { }
@@ -77,14 +77,14 @@ struct ProjectDetailView: View {
             let allProjectTechs = try modelContext.fetch(FetchDescriptor<ProjectTechnology>())
             let allProjectProcesses = try modelContext.fetch(FetchDescriptor<ProjectProcess>())
             
-            // 2. 該当プロジェクトに関連するProjectTechnologyを削除
+            // 2. 該当案件に関連するProjectTechnologyを削除
             for projectTech in allProjectTechs {
                 if projectTech.project === project {
                     modelContext.delete(projectTech)
                 }
             }
             
-            // 3. 該当プロジェクトに関連するProjectProcessを削除
+            // 3. 該当案件に関連するProjectProcessを削除
             for projectProcess in allProjectProcesses {
                 if projectProcess.project === project {
                     modelContext.delete(projectProcess)
@@ -94,7 +94,7 @@ struct ProjectDetailView: View {
             // 4. 一度保存して関連を切断
             try modelContext.save()
             
-            // 5. プロジェクト本体を削除
+            // 5. 案件本体を削除
             modelContext.delete(project)
             try modelContext.save()
             
@@ -246,41 +246,6 @@ struct ProjectDetailInfoSection: View {
 
 // MARK: - Helper Components
 
-// セクション共通レイアウト
-struct DetailSection<Content: View>: View {
-    let title: String
-    let iconName: String
-    let content: Content
-    
-    init(title: String, iconName: String, @ViewBuilder content: () -> Content) {
-        self.title = title
-        self.iconName = iconName
-        self.content = content()
-    }
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 8) {
-                Image(systemName: iconName)
-                    .foregroundColor(.careerLogPrimary)
-                    .font(.system(size: 18, weight: .semibold))
-                
-                Text(title)
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.careerLogPrimaryText)
-                
-                Spacer()
-            }
-            
-            content
-        }
-        .padding(20)
-        .background(Color.careerLogCardBackground)
-        .cornerRadius(12)
-        .shadow(color: Color.careerLogBorder.opacity(0.1), radius: 2, x: 0, y: 1)
-    }
-}
 
 // 情報行
 struct DetailInfoRow: View {
@@ -312,57 +277,19 @@ struct DetailInfoRow: View {
 }
 
 
-// 編集画面のプレースホルダー
-struct EditProjectView: View {
-    let project: Project
-    @Environment(\.dismiss) private var dismiss
-    
-    var body: some View {
-        NavigationView {
-            VStack {
-                Text("案件編集画面")
-                    .font(.title)
-                
-                Text("案件名: \(project.name)")
-                    .font(.headline)
-                
-                Spacer()
-            }
-            .padding()
-            .navigationTitle("案件を編集")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("キャンセル") {
-                        dismiss()
-                    }
-                }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("保存") {
-                        // 編集機能は今後実装
-                        dismiss()
-                    }
-                    .fontWeight(.semibold)
-                }
-            }
-        }
-    }
-}
-
 // MARK: - Preview
 struct ProjectDetailView_Previews: PreviewProvider {
     static var previews: some View {
         // プレビュー用のモックデータを作成
         let sampleProject = Project(
-            name: "ECサイトリニューアルプロジェクト",
+            name: "ECサイトリニューアル案件",
             startDate: Calendar.current.date(byAdding: .month, value: -6, to: Date()) ?? Date(),
             endDate: Date(),
             isOngoing: false,
             industry: "Web・EC",
             role: "フルスタックエンジニア",
             teamSize: "中規模（5-20名）",
-            overview: "既存のECサイトを最新技術でリニューアルし、ユーザビリティとパフォーマンスを大幅に改善するプロジェクトです。",
+            overview: "既存のECサイトを最新技術でリニューアルし、ユーザビリティとパフォーマンスを大幅に改善する案件です。",
             responsibilities: "フロントエンドの設計・実装、API設計、データベース最適化を担当しました。チームメンバーとの密な連携を通じて、効率的な開発プロセスを構築しました。",
             achievements: "ページ読み込み速度を50%改善し、コンバージョン率が15%向上しました。React.jsとNext.jsの深い知識を習得できました。"
         )

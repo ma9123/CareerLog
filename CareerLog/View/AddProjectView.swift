@@ -1,19 +1,32 @@
-//
-//  AddProjectView.swift
-//  CareerLog
-//
-//  Created by 伊藤真依 on 2025/06/27.
-//
-
 import SwiftUI
 import SwiftData
 
 // MARK: - AddProjectView (メイン画面)
 struct AddProjectView: View {
+    let editingProject: Project? // nilなら新規作成、あれば編集
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @State private var currentStep = 1
-    @State private var projectData = ProjectFormData()
+    @State private var projectData: ProjectFormData
+    
+    // イニシャライザでeditingProjectパラメータを受け取る
+    init(editingProject: Project? = nil) {
+        self.editingProject = editingProject
+        // 編集時は既存データで初期化
+        if let project = editingProject {
+            _projectData = State(initialValue: ProjectFormData(from: project))
+        } else {
+            _projectData = State(initialValue: ProjectFormData())
+        }
+    }
+    
+    private var isEditing: Bool {
+        editingProject != nil
+    }
+    
+    private var navigationTitle: String {
+        isEditing ? "案件を編集" : "案件を追加"
+    }
     
     var body: some View {
         NavigationView {
@@ -42,13 +55,14 @@ struct AddProjectView: View {
                     currentStep: $currentStep,
                     projectData: projectData,
                     onSave: saveProject,
-                    onCancel: { dismiss() }
+                    onCancel: { dismiss() },
+                    isEditing: isEditing
                 )
                 .padding(.horizontal, 20)
                 .padding(.bottom, 34)
             }
             .background(Color.careerLogBackground)
-            .navigationTitle("案件を追加")
+            .navigationTitle(navigationTitle)
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
             .toolbar {
@@ -69,6 +83,14 @@ struct AddProjectView: View {
     }
     
     private func saveProject() {
+        if isEditing {
+            updateExistingProject()
+        } else {
+            createNewProject()
+        }
+    }
+    
+    private func createNewProject() {
         let project = Project(
             name: projectData.name,
             startDate: projectData.startDate,
@@ -86,7 +108,6 @@ struct AddProjectView: View {
         
         // 技術の関連付け
         for techName in projectData.selectedTechnologies {
-            // 既存の技術を検索または新規作成
             let technology = findOrCreateTechnology(name: techName)
             let projectTech = ProjectTechnology(project: project, technology: technology)
             modelContext.insert(projectTech)
@@ -101,6 +122,60 @@ struct AddProjectView: View {
         
         try? modelContext.save()
         dismiss()
+    }
+    
+    private func updateExistingProject() {
+        guard let project = editingProject else { return }
+        
+        // 案件基本情報を更新
+        project.name = projectData.name
+        project.startDate = projectData.startDate
+        project.endDate = projectData.isOngoing ? nil : projectData.endDate
+        project.isOngoing = projectData.isOngoing
+        project.industry = projectData.industry?.displayName
+        project.role = projectData.role?.displayName
+        project.teamSize = projectData.teamSize?.displayName
+        project.overview = projectData.overview.isEmpty ? nil : projectData.overview
+        project.responsibilities = projectData.responsibilities.isEmpty ? nil : projectData.responsibilities
+        project.achievements = projectData.achievements.isEmpty ? nil : projectData.achievements
+        project.updatedAt = Date()
+        
+        // 既存の関連データを削除
+        removeExistingRelations(for: project)
+        
+        // 新しい関連データを追加
+        for techName in projectData.selectedTechnologies {
+            let technology = findOrCreateTechnology(name: techName)
+            let projectTech = ProjectTechnology(project: project, technology: technology)
+            modelContext.insert(projectTech)
+        }
+        
+        for (index, processName) in projectData.selectedProcesses.enumerated() {
+            let process = findOrCreateProcess(name: processName, order: index)
+            let projectProcess = ProjectProcess(project: project, process: process)
+            modelContext.insert(projectProcess)
+        }
+        
+        try? modelContext.save()
+        dismiss()
+    }
+    
+    private func removeExistingRelations(for project: Project) {
+        // 既存のProjectTechnologyを削除
+        let allProjectTechs = (try? modelContext.fetch(FetchDescriptor<ProjectTechnology>())) ?? []
+        for projectTech in allProjectTechs {
+            if projectTech.project === project {
+                modelContext.delete(projectTech)
+            }
+        }
+        
+        // 既存のProjectProcessを削除
+        let allProjectProcesses = (try? modelContext.fetch(FetchDescriptor<ProjectProcess>())) ?? []
+        for projectProcess in allProjectProcesses {
+            if projectProcess.project === project {
+                modelContext.delete(projectProcess)
+            }
+        }
     }
     
     private func findOrCreateTechnology(name: String) -> Technology {
@@ -151,6 +226,26 @@ class ProjectFormData {
     var overview: String = ""
     var responsibilities: String = ""
     var achievements: String = ""
+    
+    init() {
+        // 新規作成時のデフォルト値
+    }
+    
+    // 編集時の初期化
+    init(from project: Project) {
+        self.name = project.name
+        self.startDate = project.startDate
+        self.endDate = project.endDate ?? Date()
+        self.isOngoing = project.isOngoing
+        self.industry = Industry.allCases.first { $0.displayName == project.industry }
+        self.role = Role.allCases.first { $0.displayName == project.role }
+        self.teamSize = TeamSize.allCases.first { $0.displayName == project.teamSize }
+        self.selectedTechnologies = project.technologyNames
+        self.selectedProcesses = project.processNames
+        self.overview = project.overview ?? ""
+        self.responsibilities = project.responsibilities ?? ""
+        self.achievements = project.achievements ?? ""
+    }
     
     var isStep1Valid: Bool {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -209,6 +304,7 @@ struct Step1BasicInfoView: View {
                         .datePickerStyle(CompactDatePickerStyle())
                         .labelsHidden()
                         .tint(.careerLogPrimary)
+                        .environment(\.locale, Locale(identifier: "ja_JP"))
                 }
                 
                 VStack(alignment: .leading, spacing: 8) {
@@ -223,6 +319,7 @@ struct Step1BasicInfoView: View {
                             .datePickerStyle(CompactDatePickerStyle())
                             .labelsHidden()
                             .tint(.careerLogPrimary)
+                            .environment(\.locale, Locale(identifier: "ja_JP"))
                     }
                 }
                 
@@ -466,6 +563,7 @@ struct NavigationButtonsView: View {
     let projectData: ProjectFormData
     let onSave: () -> Void
     let onCancel: () -> Void
+    let isEditing: Bool
     
     var body: some View {
         HStack(spacing: 12) {
@@ -492,7 +590,7 @@ struct NavigationButtonsView: View {
                 .buttonStyle(PrimaryButtonStyle())
                 .disabled(currentStep == 1 && !projectData.isStep1Valid)
             } else {
-                Button("完了") {
+                Button(isEditing ? "更新" : "完了") {
                     onSave()
                 }
                 .buttonStyle(PrimaryButtonStyle())
@@ -504,11 +602,6 @@ struct NavigationButtonsView: View {
 }
 
 
-
-
-
-
-// MARK: - Placeholder Picker Views
 struct IndustryPickerView: View {
     @Binding var selectedIndustry: Industry?
     @Environment(\.dismiss) private var dismiss
@@ -619,4 +712,3 @@ struct TeamSizePickerView: View {
         }
     }
 }
-

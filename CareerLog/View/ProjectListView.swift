@@ -55,7 +55,7 @@ struct ProjectListView: View {
             }
             .background(Color.careerLogBackground)
             .navigationTitle("案件")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
@@ -284,7 +284,7 @@ struct ProjectListCard: View {
         .padding(16)
         .background(Color.careerLogCardBackground)
         .cornerRadius(12)
-        .shadow(color: Color.careerLogBorder.opacity(0.2), radius: 2, x: 0, y: 1)
+        .shadow(color: Color.careerLogBorder.opacity(1), radius: 4, x: 0, y: 2)
     }
     
     private var periodText: String {

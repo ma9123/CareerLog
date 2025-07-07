@@ -15,8 +15,10 @@ struct ProjectHeaderSection: View {
             HStack {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(project.name)
-                        .font(.title2)
-                        .fontWeight(.bold)
+//                        .font(.headline)
+//                        .fontWeight(.semibold)
+                        .font(.system(size: 18, weight: .bold))
+//                        .fontWeight(.bold)
                         .foregroundColor(.careerLogPrimaryText)
                     
                     Text(periodText)
@@ -38,7 +40,7 @@ struct ProjectHeaderSection: View {
         .padding(20)
         .background(Color.careerLogCardBackground)
         .cornerRadius(16)
-        .shadow(color: Color.careerLogBorder.opacity(0.15), radius: 8, x: 0, y: 2)
+        .shadow(color: Color.careerLogBorder.opacity(1), radius: 4, x: 0, y: 2)
     }
     
     private var periodText: String {
