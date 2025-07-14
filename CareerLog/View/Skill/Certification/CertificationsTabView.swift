@@ -40,11 +40,15 @@ struct CertificationListSection: View {
         ) {
             VStack(spacing: 12) {
                 if certifications.isEmpty {
-                    EmptyStateView(
-                        iconName: "graduationcap",
-                        title: "資格がまだありません",
-                        subtitle: "取得した資格を登録して\nキャリアをアピールしましょう"
-                    )
+                    HStack {
+                        Spacer()
+                        EmptyStateView(
+                            iconName: "graduationcap",
+                            title: "資格がまだありません",
+                            subtitle: "最初の資格を追加して、\nキャリアの記録を始めましょう！"
+                        )
+                        Spacer()
+                    }
                 } else {
                     VStack(spacing: 8) {
                         ForEach(certifications.sorted { $0.obtainedDate > $1.obtainedDate }, id: \.self) { certification in
